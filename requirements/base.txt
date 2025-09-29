@@ -1,0 +1,16 @@
+celery==5.3.6
+# Core Django dependencies
+Django==4.2.18
+django-celery-beat==2.5.0
+django-celery-results==2.5.0
+django-cors-headers==4.3.1
+django-redis==5.4.0
+djangorestframework==3.14.0
+drf-spectacular==0.26.5
+geopy==2.4.1
+lagom==0.19.0
+psycopg2-binary==2.9.9
+pydantic==2.11.9
+python-decouple==3.8
+redis==5.0.1
+requests==2.31.0

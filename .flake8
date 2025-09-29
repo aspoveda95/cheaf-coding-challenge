@@ -1,0 +1,30 @@
+[flake8]
+max-line-length = 88
+extend-ignore =
+    E203,
+    W503,
+    E501,
+    E402,
+    F401
+docstring-convention = google
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    .pytest_cache,
+    .coverage,
+    htmlcov,
+    .tox,
+    .mypy_cache,
+    build,
+    dist,
+    *.egg-info,
+    migrations,
+    node_modules
+per-file-ignores =
+    __init__.py:F401
+    tests/*:S101
+    src/infrastructure/repositories/*:S101
+max-complexity = 10
+ignore = E501,W503,D100,D103,D104,D101,D102,D107,F401,D105,D415,D403,D205,D106,E203,F841

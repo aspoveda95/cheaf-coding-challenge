@@ -1,0 +1,170 @@
+name: 🚀 CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, dev, develop]
+  pull_request:
+    branches: [main, dev, develop]
+
+env:
+  PYTHON_VERSION: "3.11"
+  POSTGRES_VERSION: "15"
+
+jobs:
+  # 🧪 Testing Job
+  test:
+    name: 🧪 Tests & Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/base.txt
+          pip install -r requirements/lint.txt
+
+      - name: 🗄️ Set up PostgreSQL
+        uses: postgresql@v1
+        with:
+          postgresql-version: ${{ env.POSTGRES_VERSION }}
+
+      - name: 🔴 Set up Redis
+        uses: supercharge/redis-github-action@v1.4.0
+        with:
+          redis-version: "7"
+
+      - name: 🗃️ Run Django migrations
+        run: |
+          python manage.py migrate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/flash_promos_test
+          REDIS_URL: redis://localhost:6379/0
+
+      - name: 🧪 Run tests with coverage
+        run: |
+          pytest --cov=src --cov-report=xml --cov-report=html --junitxml=test-results.xml -v
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/flash_promos_test
+          REDIS_URL: redis://localhost:6379/0
+
+      - name: 📊 Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            test-results.xml
+            coverage.xml
+
+      - name: 📈 Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: htmlcov/
+
+      - name: 📈 Comment coverage on PR
+        uses: py-cov-action@v1
+        if: github.event_name == 'pull_request'
+        with:
+          path: coverage.xml
+          fail_under: 90
+          show_missing: true
+
+  # 🔍 Code Quality Job
+  quality:
+    name: 🔍 Code Quality
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/lint.txt
+
+      - name: 🎨 Run Black (code formatting)
+        run: black --check src/ tests/
+
+      - name: 📋 Run isort (import sorting)
+        run: isort --check-only src/ tests/
+
+      - name: 🔍 Run Flake8 (linting)
+        run: flake8 src/ tests/
+
+      - name: 🔬 Run MyPy (type checking)
+        run: mypy src/
+
+  # 🏗️ Build Job
+  build:
+    name: 🏗️ Build & Security
+    runs-on: ubuntu-latest
+    needs: [test, quality]
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build Docker image
+        run: |
+          docker build -t flash-promos-api:latest .
+        env:
+          DOCKER_BUILDKIT: 1
+
+      - name: 🔒 Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "flash-promos-api:latest"
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: 📊 Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+
+  # 📦 Deploy Job (only on main branch)
+  deploy:
+    name: 📦 Deploy
+    runs-on: ubuntu-latest
+    needs: [test, quality, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏷️ Create release tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "v$(date +'%Y.%m.%d')" -m "Release $(date +'%Y-%m-%d')"
+          git push origin "v$(date +'%Y.%m.%d')"
+
+      - name: 📊 Create deployment summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Tests: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Code Quality: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Security Scan: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- 🏷️ Tag: v$(date +'%Y.%m.%d')" >> $GITHUB_STEP_SUMMARY

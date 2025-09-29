@@ -1,0 +1,834 @@
+{
+  "info": {
+    "name": "Flash Promos API - QA Automation",
+    "description": "Colección completa para testing end-to-end de la API Flash Promos",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8001",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "product_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "store_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "flash_promo_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reservation_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🏥 Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👤 User Management",
+      "item": [
+        {
+          "name": "Create User with Location",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test.user.{{$timestamp}}@example.com\",\n  \"name\": \"Test User\",\n  \"latitude\": 40.7128,\n  \"longitude\": -74.0060\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response has user ID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.exist;",
+                  "    pm.environment.set('user_id', jsonData.id);",
+                  "});",
+                  "",
+                  "pm.test('User has correct email', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.email).to.include('test.user');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create User without Location",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"no.location.{{$timestamp}}@example.com\",\n  \"name\": \"User Without Location\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('User created without location', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.location).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/statistics/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "statistics", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Statistics contain required fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('total_users');",
+                  "    pm.expect(jsonData).to.have.property('new_users');",
+                  "    pm.expect(jsonData).to.have.property('frequent_buyers');",
+                  "    pm.expect(jsonData).to.have.property('vip_customers');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🏪 Store & Product Setup",
+      "item": [
+        {
+          "name": "Set Store ID (Mock)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Health check passed', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Set mock store ID', function () {",
+                  "    // Using a mock UUID for store - in real scenario this would come from external system",
+                  "    pm.environment.set('store_id', '123e4567-e89b-12d3-a456-426614174001');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Set Product ID (Mock)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Health check passed', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Set mock product ID', function () {",
+                  "    // Using a mock UUID for product - in real scenario this would come from external system",
+                  "    pm.environment.set('product_id', '123e4567-e89b-12d3-a456-426614174000');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "⚡ Flash Promos",
+      "item": [
+        {
+          "name": "Create Flash Promo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": \"{{product_id}}\",\n  \"store_id\": \"{{store_id}}\",\n  \"promo_price\": {\n    \"amount\": \"499.00\",\n    \"currency\": \"USD\"\n  },\n  \"time_range\": {\n    \"start_time\": \"00:00:00\",\n    \"end_time\": \"23:59:59\"\n  },\n  \"user_segments\": [\"new_users\", \"frequent_buyers\"],\n  \"max_radius_km\": 2.0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/flash-promos/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "flash-promos", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response has flash promo ID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.exist;",
+                  "    pm.environment.set('flash_promo_id', jsonData.id);",
+                  "});",
+                  "",
+                  "pm.test('Flash promo is not active by default', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.is_active).to.be.false;",
+                  "});",
+                  "",
+                  "pm.test('Price is correct', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.promo_price.amount).to.eql('499.00');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Active Flash Promos (Before Activation)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/flash-promos/active/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "flash-promos", "active", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('No active promos before activation', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(jsonData.length).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Activate Flash Promo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"promo_id\": \"{{flash_promo_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/flash-promos/activate/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "flash-promos", "activate", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Activation successful', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('activated successfully');",
+                  "    pm.expect(jsonData.promo_id).to.eql(pm.environment.get('flash_promo_id'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Active Flash Promos (After Activation)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/flash-promos/active/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "flash-promos", "active", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Active promos found', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(jsonData.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Promo Eligibility",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"promo_id\": \"{{flash_promo_id}}\",\n  \"user_id\": \"{{user_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/flash-promos/eligibility/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "flash-promos", "eligibility", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Eligibility response has required fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('eligible');",
+                  "    pm.expect(jsonData).to.have.property('reason');",
+                  "    pm.expect(jsonData.eligible).to.be.a('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Promo Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/flash-promos/{{flash_promo_id}}/statistics/",
+              "host": ["{{base_url}}"],
+              "path": [
+                "api",
+                "flash-promos",
+                "{{flash_promo_id}}",
+                "statistics",
+                ""
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Statistics response is valid', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🛒 Reservations",
+      "item": [
+        {
+          "name": "Check Product Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reservations/product/{{product_id}}/availability/",
+              "host": ["{{base_url}}"],
+              "path": [
+                "api",
+                "reservations",
+                "product",
+                "{{product_id}}",
+                "availability",
+                ""
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Availability response is correct', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.product_id).to.eql(pm.environment.get('product_id'));",
+                  "    pm.expect(jsonData.is_available).to.be.a('boolean');",
+                  "    pm.expect(jsonData.is_reserved).to.be.a('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reserve Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": \"{{product_id}}\",\n  \"user_id\": \"{{user_id}}\",\n  \"flash_promo_id\": \"{{flash_promo_id}}\",\n  \"reservation_duration_minutes\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reservations/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reservations", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 or 400', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    pm.test('Reservation created successfully', function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData.id).to.exist;",
+                  "        pm.environment.set('reservation_id', jsonData.id);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('Reservation failed (promo not active or other issue)', function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('error');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Reservation Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reservations/{{reservation_id}}/status/",
+              "host": ["{{base_url}}"],
+              "path": [
+                "api",
+                "reservations",
+                "{{reservation_id}}",
+                "status",
+                ""
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 404', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('Reservation status retrieved', function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData.id).to.exist;",
+                  "        pm.expect(jsonData.is_expired).to.exist;",
+                  "        pm.expect(jsonData.time_remaining_seconds).to.exist;",
+                  "    });",
+                  "} else {",
+                  "    pm.test('Reservation not found', function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('error');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Process Purchase",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservation_id\": \"{{reservation_id}}\",\n  \"user_id\": \"{{user_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reservations/purchase/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reservations", "purchase", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 400', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('Purchase processed successfully', function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData.success).to.be.true;",
+                  "        pm.expect(jsonData.message).to.exist;",
+                  "        pm.expect(jsonData).to.have.property('purchase_price');",
+                  "    });",
+                  "} else {",
+                  "    pm.test('Purchase failed', function () {",
+                  "        const jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('error');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🧪 Error Testing",
+      "item": [
+        {
+          "name": "Create Flash Promo - Invalid Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": \"invalid-uuid\",\n  \"store_id\": \"{{store_id}}\",\n  \"promo_price\": {\n    \"amount\": \"499.00\",\n    \"currency\": \"USD\"\n  },\n  \"time_range\": {\n    \"start_time\": \"17:00:00\",\n    \"end_time\": \"19:00:00\"\n  },\n  \"user_segments\": [\"invalid_segment\"],\n  \"max_radius_km\": -1.0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/flash-promos/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "flash-promos", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error response contains validation errors', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reserve Product - Missing Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": \"{{product_id}}\",\n  \"user_id\": \"{{user_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reservations/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reservations", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Error response for missing fields', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Non-existent User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/00000000-0000-0000-0000-000000000000",
+              "host": ["{{base_url}}"],
+              "path": [
+                "api",
+                "users",
+                "00000000-0000-0000-0000-000000000000",
+                ""
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📊 Performance Testing",
+      "item": [
+        {
+          "name": "Create Multiple Users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user{{$randomInt}}@example.com\",\n  \"name\": \"User {{$randomInt}}\",\n  \"latitude\": {{$randomFloat}},\n  \"longitude\": {{$randomFloat}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response time is acceptable', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bulk Flash Promo Creation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": \"{{product_id}}\",\n  \"store_id\": \"{{store_id}}\",\n  \"promo_price\": {\n    \"amount\": \"{{$randomInt}}\",\n    \"currency\": \"USD\"\n  },\n  \"time_range\": {\n    \"start_time\": \"{{$randomInt}}:00:00\",\n    \"end_time\": \"{{$randomInt}}:00:00\"\n  },\n  \"user_segments\": [\"new_users\"],\n  \"max_radius_km\": {{$randomFloat}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/flash-promos/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "flash-promos", ""]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Response time is acceptable', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

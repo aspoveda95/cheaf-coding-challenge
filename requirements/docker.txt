@@ -1,0 +1,7 @@
+# Docker dependencies
+-r production.txt
+-r testing.txt
+
+# Additional Docker-specific dependencies
+psycopg2-binary==2.9.9
+redis==5.0.1
