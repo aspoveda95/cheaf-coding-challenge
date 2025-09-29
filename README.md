@@ -462,8 +462,6 @@ make logs
 make shell
 ```
 
-📚 **Documentación detallada**: [docs/TESTING.md](docs/TESTING.md)
-
 ## 🚀 CI/CD Pipeline
 
 El proyecto incluye un pipeline completo de CI/CD con GitHub Actions:
@@ -488,8 +486,6 @@ El proyecto incluye un pipeline completo de CI/CD con GitHub Actions:
 - **Push a `dev`**: Tests + Quality
 - **Pull Request**: Pipeline completo
 - **Push a `main`**: Pipeline completo + Deploy
-
-📚 **Documentación de workflows**: [.github/README.md](.github/README.md)
 
 ## 📋 Testing End-to-End con Postman
 
