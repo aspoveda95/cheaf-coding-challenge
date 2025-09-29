@@ -1,0 +1,7 @@
+# Production dependencies
+-r base.txt
+
+# Production server
+gunicorn==21.2.0
+sentry-sdk==1.38.0
+whitenoise==6.6.0

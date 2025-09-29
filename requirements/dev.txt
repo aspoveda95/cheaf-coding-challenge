@@ -1,0 +1,7 @@
+# Development dependencies
+-r base.txt
+-r lint.txt
+
+# Development tools
+django-debug-toolbar==4.2.0
+django-silk==5.0.4
